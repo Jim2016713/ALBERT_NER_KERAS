@@ -16,6 +16,8 @@ from utils import MAX_SEQ_LEN, train_file_path, test_file_path, dev_file_path
 from load_data import read_data
 from albert_zh.extract_feature import BertVector
 
+from tqdm import tqdm
+
 # 利用ALBERT提取文本特征
 bert_model = BertVector(pooling_strategy="NONE", max_seq_len=MAX_SEQ_LEN)
 f = lambda text: bert_model.encode([text])["encodes"][0]
@@ -36,7 +38,13 @@ def input_data(file_path):
 
     # ALBERT ERCODING
     print("start ALBERT encding")
-    x = np.array([f(sent) for sent in sentences])
+    x = []
+    processor_bar = tqdm(sentences)
+    for bar, sent in zip(processor_bar, sentences):
+        processor_bar.set_description("Processing")
+        x.append(f(sent))
+
+    x = np.array(x)
     print("end ALBERT encoding")
 
     # 对y值统一长度为MAX_SEQ_LEN
@@ -120,7 +128,7 @@ def train_model():
     final_tags = []
     for test_tag, pred_tag in zip(test_tags, pred_tags):
         if len(test_tag) == len(pred_tag):
-            final_tags.append(test_tag)
+            final_tags.append(pred_tag)
         elif len(test_tag) < len(pred_tag):
             final_tags.append(pred_tag[:len(test_tag)])
         else:
